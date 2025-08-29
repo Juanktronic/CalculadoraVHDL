@@ -109,8 +109,9 @@ BEGIN
                      "0000010" WHEN "0110",  -- 6
                      "1111000" WHEN "0111",  -- 7
                      "0000000" WHEN "1000",  -- 8
-                     "0000110" WHEN OTHERS,  -- E
+                     "0000110" WHEN OTHERS;  -- E
 							
 
 END ARCHITECTURE structural;
+
 
