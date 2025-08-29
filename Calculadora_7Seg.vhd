@@ -12,14 +12,12 @@ ENTITY Calculadora_7Seg IS
 END ENTITY Calculadora_7Seg;
 
 ARCHITECTURE structural OF Calculadora_7Seg IS
-    -- Señales internas
+ 
     SIGNAL sum_result  : STD_LOGIC_VECTOR(4 DOWNTO 0);   
     SIGNAL mult_result : STD_LOGIC_VECTOR(6 DOWNTO 0);   
     SIGNAL selected_result : STD_LOGIC_VECTOR(6 DOWNTO 0); 
     SIGNAL units_digit : STD_LOGIC_VECTOR(3 DOWNTO 0);   
     SIGNAL tens_digit  : STD_LOGIC_VECTOR(3 DOWNTO 0);   
-    
-    -- Señales optimizadas - solo las restas necesarias
     SIGNAL res_10, res_80 : STD_LOGIC_VECTOR(6 DOWNTO 0);
     SIGNAL carry_10, carry_80 : STD_LOGIC;
     SIGNAL sum_carry : STD_LOGIC;
@@ -42,8 +40,7 @@ BEGIN
             sum  => sum_result,
             Cout => sum_carry
         );
-    
-    -- Instancia del multiplicador
+
     multiplier: ENTITY work.Mult4x7
         PORT MAP (
             a    => a,
@@ -75,7 +72,6 @@ BEGIN
             Cout => carry_10
         );
     
-    -- Lógica simplificada usando comparaciones directas con el resultado
     WITH selected_result SELECT
         tens_digit <= "1000" WHEN "1010000"|"1010001",
                       "0111" WHEN "1000110"|"1000111"|"1001000"|"1001001"|"1001010"|"1001011"|"1001100"|"1001101"|"1001110"|"1001111",
@@ -87,7 +83,7 @@ BEGIN
                       "0001" WHEN "0001010"|"0001011"|"0001100"|"0001101"|"0001110"|"0001111"|"0010000"|"0010001"|"0010010"|"0010011",
                       "0000" WHEN OTHERS; 
     
-    -- Unidades: módulo 10 usando when-else
+    -- Unidades: módulo 10
     units_digit <= selected_result(3 DOWNTO 0) WHEN carry_10 = '0' ELSE  -- Si < 10, usar directo
                    res_10(3 DOWNTO 0);                                     -- Si >= 10, usar residuo
     
@@ -116,4 +112,5 @@ BEGIN
                      "0000000" WHEN "1000",  -- 8
                      "1111111" WHEN OTHERS;  -- Error
 							
+
 END ARCHITECTURE structural;
