@@ -97,7 +97,7 @@ BEGIN
                   "1111000" WHEN units_digit = "0111" ELSE  -- 7
                   "0000000" WHEN units_digit = "1000" ELSE  -- 8
                   "0010000" WHEN units_digit = "1001" ELSE  -- 9
-                  "0000110" -- E
+                  "0000110"; -- E
     
     WITH tens_digit SELECT
         seg7_tens <= "1000000" WHEN "0000",  -- 0
@@ -113,5 +113,6 @@ BEGIN
 							
 
 END ARCHITECTURE structural;
+
 
 
