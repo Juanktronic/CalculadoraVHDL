@@ -68,7 +68,7 @@ BEGIN
 	
 
 	 Sign <= '1' WHEN (Add_Sub_Result(4) = '1' AND Sum_Or_Sub ='0') ELSE '0';	
---Add_Sub_Ext <= "00" & Add_Sub_Result WHEN Cout_Sign = '1' ELSE "11" & Add_Sub_Result;
+----Add_Sub_Ext <= "00" & Add_Sub_Result WHEN Cout_Sign = '1' ELSE "11" & Add_Sub_Result;
     Add_Sub_Ext <= "11" & Add_Sub_Result WHEN (Add_Sub_Result(4) = '1' AND Sum_Or_Sub ='0') ELSE "00" & Add_Sub_Result;
 
     Result <= Add_Sub_Ext WHEN Add_Or_Mul = '1' ELSE Mul_Result;
@@ -81,6 +81,7 @@ BEGIN
         b           => B_bin,
 		  Sign        => Sign,
 		  Resultd     => Result,
+		  Add_Or_Mul  => Add_Or_Mul,
 		  ResultAbs   => Abs_Add_Sub_Ext,
 		  S7_A        => seg7_A,
 		  S7_B        => seg7_B,
