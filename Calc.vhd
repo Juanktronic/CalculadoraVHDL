@@ -1,6 +1,28 @@
 LIBRARY IEEE;
 USE IEEE.STD_LOGIC_1164.ALL;
 
+------------------------------------------------------------
+-- Archivo      : calc.vhd
+-- Descripción  : Código usado como principal, maneja las en
+--                tradas y las salidas, e integra el bloque
+--                de la multiplicación, la suma y maneja la 
+--                lógica del valor absoluto para pasarlo al 
+--                modulo que maneja el 7 segmentos.
+-- Autores      : Mojica, Guevara y Díaz.
+-- Fecha        : [01/09/25]
+------------------------------------------------------------
+-- Detalles:
+--   - Propósito: Manejar entradas provenientes de la FPGA.
+--                y distribuirlas en los bloques.
+--   - Entradas : A_bin: primer digito de entrada.
+--                B_bin: primer digito de entrada.
+--                Add_or_Mul: 1 para suma 0 para multiplicación.
+--                Sum_Or_Sub: 1 para suma 0 para resta.
+--   - Salidas  : seg7_A / seg7_B : Salidas que manejan el 
+--                display de los digitos de entrada.
+--                s7resul_A 
+------------------------------------------------------------
+
 ENTITY Calc IS
     PORT( 
         A_bin        : IN  STD_LOGIC_VECTOR(3 DOWNTO 0);
@@ -16,17 +38,17 @@ END ENTITY Calc;
 
 ARCHITECTURE behaviour OF Calc IS
 
-	 SIGNAL A_Sum_Sub      : STD_LOGIC_VECTOR(4 DOWNTO 0);
-	 SIGNAL B_Sum_Sub      : STD_LOGIC_VECTOR(4 DOWNTO 0);
-    SIGNAL Add_Sub_Result : STD_LOGIC_VECTOR(4 DOWNTO 0);
+	 SIGNAL A_Sum_Sub          : STD_LOGIC_VECTOR(4 DOWNTO 0);
+	 SIGNAL B_Sum_Sub          : STD_LOGIC_VECTOR(4 DOWNTO 0);
+    SIGNAL Add_Sub_Result     : STD_LOGIC_VECTOR(4 DOWNTO 0);
 	 SIGNAL Not_Add_Sub_Result : STD_LOGIC_VECTOR(4 DOWNTO 0);
-	 SIGNAL Neg_Abs_Value  : STD_LOGIC_VECTOR(4 DOWNTO 0);
-    SIGNAL Add_Sub_Ext    : STD_LOGIC_VECTOR(6 DOWNTO 0);
-    SIGNAL Mul_Result     : STD_LOGIC_VECTOR(6 DOWNTO 0);
-	 SIGNAL Abs_Add_Sub_Ext: STD_LOGIC_VECTOR(6 DOWNTO 0);
-	 SIGNAL Result         : STD_LOGIC_VECTOR(6 DOWNTO 0);
-    SIGNAL Cout_Sign      : STD_LOGIC;
-	 SIGNAL Sign           : STD_LOGIC;
+	 SIGNAL Neg_Abs_Value      : STD_LOGIC_VECTOR(4 DOWNTO 0);
+    SIGNAL Add_Sub_Ext        : STD_LOGIC_VECTOR(6 DOWNTO 0);
+    SIGNAL Mul_Result         : STD_LOGIC_VECTOR(6 DOWNTO 0);
+	 SIGNAL Abs_Add_Sub_Ext    : STD_LOGIC_VECTOR(6 DOWNTO 0);
+	 SIGNAL Result             : STD_LOGIC_VECTOR(6 DOWNTO 0);
+    SIGNAL Cout_Sign          : STD_LOGIC;
+	 SIGNAL Sign               : STD_LOGIC;
 
 BEGIN
 
@@ -44,16 +66,9 @@ BEGIN
             sum  => Add_Sub_Result,
             Cout => OPEN
         );
-
-    Mul: ENTITY work.Mult4x7
-        PORT MAP(
-            a    => A_Bin,
-            b    => B_Bin,
-            prod => Mul_Result
-        );
-		  
+		    
 	Not_Add_Sub_Result <= NOT Add_Sub_Result;
-	
+		  
    Abs_val: ENTITY work.N_Adder
         GENERIC MAP (
             N => 5
@@ -65,7 +80,13 @@ BEGIN
             sum  => Neg_Abs_Value,
             Cout => OPEN
         );
-	
+
+    Mul: ENTITY work.Mult4x7
+        PORT MAP(
+            a    => A_Bin,
+            b    => B_Bin,
+            prod => Mul_Result
+        );	
 
 	 Sign <= '1' WHEN (Add_Sub_Result(4) = '1' AND Sum_Or_Sub ='0') ELSE '0';	
 ----Add_Sub_Ext <= "00" & Add_Sub_Result WHEN Cout_Sign = '1' ELSE "11" & Add_Sub_Result;
@@ -88,5 +109,5 @@ BEGIN
 		  S7resul_A_Final   => s7resul_A,
 		  S7resul_B   => s7resul_B
                  );
-
+					  
 END behaviour;

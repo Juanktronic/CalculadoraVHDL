@@ -1,49 +1,85 @@
-library ieee;
-use ieee.std_logic_1164.all;
+LIBRARY IEEE;
+USE IEEE.STD_LOGIC_1164.ALL;
 
-entity Mult4x7 is
-  port (
-    a    : in  std_logic_vector(3 downto 0);  
-    b    : in  std_logic_vector(3 downto 0);  
-    prod : out std_logic_vector(6 downto 0)
+ENTITY Mult4x7 IS
+  PORT (
+    a    : IN  STD_LOGIC_VECTOR(3 DOWNTO 0);   -- Operando A (4 bits)
+    b    : IN  STD_LOGIC_VECTOR(3 DOWNTO 0);   -- Operando B (4 bits)
+    prod : OUT STD_LOGIC_VECTOR(6 DOWNTO 0)    -- Producto (7 bits)
   );
-end entity;
+END ENTITY;
 
-architecture rtl of Mult4x7 is
-  component N_Adder is
-    generic ( N : integer := 5 );
-    port (
-      ina  : in  std_logic_vector(N-1 downto 0);
-      inb  : in  std_logic_vector(N-1 downto 0);
-      sign : in  std_logic;                 -- 
-      sum  : out std_logic_vector(N-1 downto 0);
-      Cout : out std_logic
+ARCHITECTURE RTL OF Mult4x7 IS
+
+  COMPONENT N_Adder IS
+    GENERIC ( N : INTEGER := 5 );
+    PORT (
+      ina  : IN  STD_LOGIC_VECTOR(N-1 DOWNTO 0);
+      inb  : IN  STD_LOGIC_VECTOR(N-1 DOWNTO 0);
+      sign : IN  STD_LOGIC;                 -- '1' = suma, '0' = resta
+      sum  : OUT STD_LOGIC_VECTOR(N-1 DOWNTO 0);
+      Cout : OUT STD_LOGIC
     );
-  end component;
+  END COMPONENT;
 
+  -- Productos parciales
+  SIGNAL pp0, pp1, pp2, pp3 : STD_LOGIC_VECTOR(6 DOWNTO 0);
 
-  signal pp0, pp1, pp2, pp3 : std_logic_vector(6 downto 0);
+  -- Acumuladores
+  SIGNAL acc0, acc1, acc2, acc3, acc4 : STD_LOGIC_VECTOR(6 DOWNTO 0);
 
-  signal acc0, acc1, acc2, acc3, acc4 : std_logic_vector(6 downto 0);
-begin
-  pp0 <= ("000" & a)           when b(0) = '1' else (others => '0');
-  pp1 <= ("00"  & a & '0')     when b(1) = '1' else (others => '0');
-  pp2 <= ("0"   & a & "00")    when b(2) = '1' else (others => '0');
-  pp3 <= (        a & "000")   when b(3) = '1' else (others => '0');
+BEGIN
 
-  acc0 <= (others => '0');
+  -- Generación de productos parciales
+  pp0 <= ("000" & a)         WHEN b(0) = '1' ELSE (OTHERS => '0');
+  pp1 <= ("00"  & a & '0')   WHEN b(1) = '1' ELSE (OTHERS => '0');
+  pp2 <= ("0"   & a & "00")  WHEN b(2) = '1' ELSE (OTHERS => '0');
+  pp3 <= (        a & "000") WHEN b(3) = '1' ELSE (OTHERS => '0');
 
-  add0: N_Adder generic map (N => 7)
-        port map (ina => acc0, inb => pp0, sign => '1', sum => acc1, Cout => open);
+  acc0 <= (OTHERS => '0');
 
-  add1: N_Adder generic map (N => 7)
-        port map (ina => acc1, inb => pp1, sign => '1', sum => acc2, Cout => open);
+  -- Sumas parciales
+  add0 : N_Adder
+    GENERIC MAP ( N => 7 )
+    PORT MAP (
+      ina  => acc0,
+      inb  => pp0,
+      sign => '1',
+      sum  => acc1,
+      Cout => OPEN
+    );
 
-  add2: N_Adder generic map (N => 7)
-        port map (ina => acc2, inb => pp2, sign => '1', sum => acc3, Cout => open);
+  add1 : N_Adder
+    GENERIC MAP ( N => 7 )
+    PORT MAP (
+      ina  => acc1,
+      inb  => pp1,
+      sign => '1',
+      sum  => acc2,
+      Cout => OPEN
+    );
 
-  add3: N_Adder generic map (N => 7)
-        port map (ina => acc3, inb => pp3, sign => '1', sum => acc4, Cout => open);
+  add2 : N_Adder
+    GENERIC MAP ( N => 7 )
+    PORT MAP (
+      ina  => acc2,
+      inb  => pp2,
+      sign => '1',
+      sum  => acc3,
+      Cout => OPEN
+    );
 
+  add3 : N_Adder
+    GENERIC MAP ( N => 7 )
+    PORT MAP (
+      ina  => acc3,
+      inb  => pp3,
+      sign => '1',
+      sum  => acc4,
+      Cout => OPEN
+    );
+
+  -- Resultado final
   prod <= acc4;
-end architecture;
+
+END ARCHITECTURE;

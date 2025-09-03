@@ -3,7 +3,7 @@ USE IEEE.STD_LOGIC_1164.ALL;
 
 ENTITY N_Adder IS
   GENERIC (
-    N : INTEGER := 5   -- generic statement
+    N : INTEGER := 5
               );
   PORT (
     ina  : IN  STD_LOGIC_VECTOR(N-1 DOWNTO 0);
@@ -19,11 +19,16 @@ ARCHITECTURE structural OF N_Adder IS
   SIGNAL inb_Complement : STD_LOGIC_VECTOR(N - 1 DOWNTO 0);
 BEGIN
 
-	inb_Complement <= NOT inb WHEN sign = '0' ELSE inb;
+  -- Hace complemento a 1 cuando se indica una resta "sign = 0"
 
+	inb_Complement <= NOT inb WHEN sign = '0' ELSE inb;
+	
+  -- Se inicia el Carry de entrada en 1 cuando es una resta
+	
 	c(0) <= (NOT sign);
 
-  -- Generates N Full_Adder s
+  -- Genera N Full_Adder s
+  
     gen_adders: FOR i IN 0 TO N-1 GENERATE
     Full_Adder_i: ENTITY work.Full_Adder
         PORT MAP (
@@ -35,5 +40,6 @@ BEGIN
         );
   END GENERATE;
 
-  Cout <= c(N); -- Carry out
+  Cout <= c(N);
+  
 END ARCHITECTURE structural;
