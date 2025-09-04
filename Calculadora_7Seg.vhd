@@ -1,70 +1,118 @@
-LIBRARY IEEE;
-USE IEEE.STD_LOGIC_1164.ALL;
+library ieee;
+use ieee.std_logic_1164.all;
 
-ENTITY Calculadora_7Seg IS
-    PORT (
-        a                 : IN  STD_LOGIC_VECTOR(3 DOWNTO 0);  -- Operando A
-        b                 : IN  STD_LOGIC_VECTOR(3 DOWNTO 0);  -- Operando B
-		  Sign              : IN  STD_LOGIC;
-		  Add_or_Mul        : IN  STD_LOGIC;
-		  Resultd           : IN  STD_LOGIC_VECTOR(6 DOWNTO 0);
-		  ResultAbs         : IN  STD_LOGIC_VECTOR(6 DOWNTO 0);
-		  S7_A              : OUT STD_LOGIC_VECTOR(6 DOWNTO 0);
-		  S7_B              : OUT STD_LOGIC_VECTOR(6 DOWNTO 0);
-		  S7resul_A_Final   : OUT STD_LOGIC_VECTOR(6 DOWNTO 0);
-		  S7resul_B         : OUT STD_LOGIC_VECTOR(6 DOWNTO 0)
+------------------------------------------------------------
+-- Archivo      : Calculadora_7Seg.vhd
+-- Descripción  : Módulo estructural que conecta las partes
+--                de decodificación para mostrar en el 7 seg
+--                y el bloque para convertir el binario de 7
+--                bits en 2 nibbles.
+-- Fecha        : [01/09/25]
+------------------------------------------------------------
+-- Detalles:
+--   - Propósito: Visualizar A, B y el resultado en displays 7-seg.
+--                Seleccionar el valor final (signado/absoluto) y
+--                convertirlo a decenas/unidades BCD para salida.
+--   - Entradas :
+--       a[3:0]        (Operando A, 0–15)
+--       b[3:0]        (Operando B, 0–15)
+--       Sign          (1: resultado negativo; 0: no negativo)
+--       Add_or_Mul    (0: multiplicación; 1: suma)
+--       Resultd[6:0]  (Resultado directo: para suma o no firmado)
+--       ResultAbs[6:0](Resultado absoluto: para valor |res|)
+--   - Salidas  :
+--       S7_A[6:0]           (7-seg de A)
+--       S7_B[6:0]           (7-seg de B)
+--       S7resul_A_Final[6:0](7-seg decenas del resultado, con signo)
+--       S7resul_B[6:0]      (7-seg unidades del resultado)
+------------------------------------------------------------
+
+entity Calculadora_7Seg is
+  port (
+    a               : in  std_logic_vector(3 downto 0);  -- Operando A
+    b               : in  std_logic_vector(3 downto 0);  -- Operando B
+    Sign            : in  std_logic;                     -- Indicador de signo del resultado
+    Add_or_Mul      : in  std_logic;                     -- 1: Mul, 0: Add
+    Resultd         : in  std_logic_vector(6 downto 0);  -- Resultado directo (7 bits)
+    ResultAbs       : in  std_logic_vector(6 downto 0);  -- Resultado en valor absoluto (7 bits)
+    S7_A            : out std_logic_vector(6 downto 0);  -- Display A
+    S7_B            : out std_logic_vector(6 downto 0);  -- Display B
+    S7resul_A_Final : out std_logic_vector(6 downto 0);  -- Decenas del resultado (con posible signo)
+    S7resul_B       : out std_logic_vector(6 downto 0)   -- Unidades del resultado
+  );
+end entity Calculadora_7Seg;
+
+architecture structural of Calculadora_7Seg is
+
+  signal E_Invalid          : std_logic;
+  signal units_digit        : std_logic_vector(3 downto 0);
+  signal tens_digit         : std_logic_vector(3 downto 0);
+  signal units_digit_final  : std_logic_vector(3 downto 0);
+  signal tens_digit_final   : std_logic_vector(3 downto 0);
+  signal Final_Result       : std_logic_vector(6 downto 0);
+  signal S7resul_A          : std_logic_vector(6 downto 0);
+
+begin
+
+  --   E_Invalid = 1 si A o B no están en BCD (≥10)
+  E_Invalid <= (a(3) and (a(2) or a(1))) or (b(3) and (b(2) or b(1)));
+
+  -- Visualización directa de operandos A y B en 7 segmentos
+
+  Inp_A : entity work.ssA
+    port map (
+      bin     => a,
+      sseg_A  => S7_A
     );
-END ENTITY Calculadora_7Seg;
 
-ARCHITECTURE structural OF Calculadora_7Seg IS
+  Inp_B : entity work.ssA
+    port map (
+      bin     => b,
+      sseg_A  => S7_B
+    );
 
-    SIGNAL E_Invalid          : STD_LOGIC;
-    SIGNAL units_digit        : STD_LOGIC_VECTOR(3 DOWNTO 0);
-    SIGNAL tens_digit         : STD_LOGIC_VECTOR(3 DOWNTO 0);
-	 SIGNAL units_digit_final  : STD_LOGIC_VECTOR(3 DOWNTO 0);
-    SIGNAL tens_digit_final   : STD_LOGIC_VECTOR(3 DOWNTO 0);
-	 SIGNAL Final_Result       : STD_LOGIC_VECTOR(6 DOWNTO 0);
-	 SIGNAL S7resul_A          : STD_LOGIC_VECTOR(6 DOWNTO 0);
-	 
-BEGIN
+  --   - Si Sign = 0 o Add_or_Mul = 0 ⇒ usar Resultd
+  --   - En caso contrario ⇒ usar ResultAbs
+	  
+  Final_Result <= Resultd when (Sign = '0' or Add_or_Mul = '0')
+                  else ResultAbs;
 
-  E_Invalid <= (a(3) AND (a(2) OR a(1))) OR (b(3) AND (b(2) OR b(1)));
-  
-    Inp_A: ENTITY work.ssA
-  PORT MAP( 
-            bin => a,
-				sseg_A => S7_A
-				);
+  --   Se debe mostrar el signo si se cumplen las siguientes condiciones
+  --   que el switch este en modo de Suma o Resta, sea una entrada válida
+  --   y el signo sea negativo.
+  --   - En otro caso, se muestra la decena calculada.
+  --   "0111111" corresponde al segmento para '-'
 
-    Inp_B: ENTITY work.ssA
-  PORT MAP( 
-            bin => b,
-				sseg_A => S7_B
-				);
+  S7resul_A_Final <= "0111111" when (Sign = '1' and E_Invalid = '0' and Add_or_Mul = '1') 
+	  			else S7resul_A;
 
-	Final_Result <= Resultd WHEN (Sign = '0' OR Add_or_Mul = '0') ELSE ResultAbs;
-   S7Resul_A_Final <= "0111111" WHEN (Sign = '1' AND E_invalid = '0' AND Add_or_Mul = '1') ELSE S7resul_A;
+  -- Conversión de binario (7 bits) a dos dígitos decimales (BCD)
 
-    Result: ENTITY work.bin7_to_dec2
-  PORT MAP( 
-           bin_in   => Final_Result,
-			  tens => tens_digit,
-			  ones => units_digit
-           );
-	
-	tens_digit_final <= "1111" WHEN E_invalid = '1' ELSE tens_digit;	
-	units_digit_final <= "1111" WHEN E_invalid = '1' ELSE units_digit;
-	
-	Out_A: ENTITY work.ssA
-  PORT MAP( 
-            bin => tens_digit_final,
-				sseg_A => S7resul_A
-				);
+  Result : entity work.bin7_to_dec2
+    port map (
+      bin_in => Final_Result,
+      tens   => tens_digit,
+      ones   => units_digit
+    );
 
-    Out_B: ENTITY work.ssA
-  PORT MAP( 
-            bin => units_digit_final,
-				sseg_A => S7resul_B
-				);
-				
-END structural;
+  --   "1111" (BCD inválido) para que el decodificador 7-seg
+  --   muestre un patrón de error/apagado (según 'ssA').
+	  
+  tens_digit_final  <= "1111" when E_Invalid = '1' else tens_digit;
+  units_digit_final <= "1111" when E_Invalid = '1' else units_digit;
+
+  -- Salida de decenas y unidades del resultado en 7 segmentos
+
+  Out_A : entity work.ssA
+    port map (
+      bin     => tens_digit_final,
+      sseg_A  => S7resul_A
+    );
+
+  Out_B : entity work.ssA
+    port map (
+      bin     => units_digit_final,
+      sseg_A  => S7resul_B
+    );
+
+end architecture structural;
